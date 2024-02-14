@@ -31,11 +31,19 @@ jobs:
     - name: List Recent Events from Event Log
       shell: pwsh
       run: |
-        # Choose the event log (e.g., 'Application' or 'System')
-        $logName = "Application"
+        # List Recent Events from Application Log
+        Write-Host "Recent Events from Application Log:"
+        Get-WinEvent -LogName "Application" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
+        Write-Host "`n"
 
-        # Fetch and display recent log entries
-        Get-WinEvent -LogName $logName -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
+        # List Recent Events from System Log
+        Write-Host "Recent Events from System Log:"
+        Get-WinEvent -LogName "System" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
+        Write-Host "`n"
+
+        # List Recent Events from Security Log
+        Write-Host "Recent Events from Security Log:"
+        Get-WinEvent -LogName "Security" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
 
     - name: Cleanup
       shell: pwsh
