@@ -1,52 +1,36 @@
-name: Execute and Validate Atomic Test
+name: Run Atomic Test with Sysmon Monitoring
 
 on: [push]
 
 jobs:
-  run-atomic-test:
+  sysmon-atomic-test:
     runs-on: windows-latest
-    name: Run Atomic Test and Display Output
+    name: Sysmon and Atomic Red Team Test
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install and Run Atomic Test
+    - name: Install Sysmon
       shell: pwsh
       run: |
-        # Install Atomic Red Team
+        Invoke-WebRequest -Uri "https://live.sysinternals.com/Sysmon64.exe" -OutFile "Sysmon64.exe"
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml" -OutFile "sysmonconfig.xml"
+        .\Sysmon64.exe -accepteula -i sysmonconfig.xml
+
+    - name: Install Atomic Red Team
+      shell: pwsh
+      run: |
         IEX (Invoke-WebRequest 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicredteam.ps1' -UseBasicParsing);
         Install-AtomicRedTeam -getAtomics -Force
 
-        # Define the path and message for the test
-        $file_contents_path = "$Env:TEMP\test.bin"
-        $message = "Hello from the Windows Command Prompt!"
-
-        # Run Atomic Test T1059.003 - Test #2
-        Invoke-AtomicTest T1059.003 -TestNumbers 2 -InputArgs @{ "file_contents_path" = $file_contents_path; "message" = $message }
-
-        # Output the results
-        Write-Host "Contents of the file created by the test:"
-        Get-Content -Path $file_contents_path
-        
-    - name: List Recent Events from Event Log
+    - name: Run Atomic Test
       shell: pwsh
       run: |
-        # List Recent Events from Application Log
-        Write-Host "Recent Events from Application Log:"
-        Get-WinEvent -LogName "Application" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
-        Write-Host "`n"
+        # Run your specific Atomic Red Team test
+        Invoke-AtomicTest T1059.003 -TestNumbers 2
 
-        # List Recent Events from System Log
-        Write-Host "Recent Events from System Log:"
-        Get-WinEvent -LogName "System" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
-        Write-Host "`n"
-
-        # List Recent Events from Security Log
-        Write-Host "Recent Events from Security Log:"
-        Get-WinEvent -LogName "Security" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
-
-    - name: Cleanup
+    - name: Retrieve Sysmon Logs
       shell: pwsh
       run: |
-        $file_contents_path = "$Env:TEMP\test.bin"
-        Remove-Item -Path $file_contents_path -Force
+        # Fetch and display Sysmon log entries
+        Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
