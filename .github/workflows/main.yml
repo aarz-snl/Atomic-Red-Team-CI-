@@ -38,5 +38,10 @@ jobs:
     - name: Retrieve Sysmon Logs
       shell: pwsh
       run: |
-        # Fetch and display Sysmon log entries
-        Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | Format-Table -AutoSize | Out-String -Width 4096
+        # Fetch and display detailed Sysmon log entries
+        Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | ForEach-Object {
+          Write-Host "`nEvent ID: $($_.Id)"
+          Write-Host "Time Created: $($_.TimeCreated)"
+          Write-Host "Message: $($_.Message)"
+        }
+
