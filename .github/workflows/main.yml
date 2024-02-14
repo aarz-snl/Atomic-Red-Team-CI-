@@ -1,19 +1,35 @@
-name: Install Atomic Red Team Atomics Folder
+name: Execute and Validate Atomic Test
 
 on: [push]
 
 jobs:
-  install-atomics:
+  run-atomic-test:
     runs-on: windows-latest
-    name: Install Atomic Red Team Atomics Folder
+    name: Run Atomic Test and Display Output
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install Atomic Red Team Atomics Folder
+    - name: Install and Run Atomic Test
       shell: pwsh
       run: |
-        IEX (IWR 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicredteam.ps1' -UseBasicParsing);
+        # Install Atomic Red Team
+        IEX (Invoke-WebRequest 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicredteam.ps1' -UseBasicParsing);
         Install-AtomicRedTeam -getAtomics -Force
-        Invoke-AtomicTest T1059.003 -ShowDetailsBrief
 
+        # Define the path and message for the test
+        $file_contents_path = "$Env:TEMP\test.bin"
+        $message = "Hello from the Windows Command Prompt!"
+
+        # Run Atomic Test T1059.003 - Test #2
+        Invoke-AtomicTest T1059.003 -TestNumbers 2 -InputArgs @{ "file_contents_path" = $file_contents_path; "message" = $message }
+
+        # Output the results
+        Write-Host "Contents of the file created by the test:"
+        Get-Content -Path $file_contents_path
+
+    - name: Cleanup
+      shell: pwsh
+      run: |
+        $file_contents_path = "$Env:TEMP\test.bin"
+        Remove-Item -Path $file_contents_path -Force
