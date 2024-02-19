@@ -76,6 +76,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y jq
+        cat sysmon_logs.txt
 
     - name: Process WINLOGBEAT Format Logs with jq
       run: |
