@@ -48,7 +48,11 @@ jobs:
     - name: Save Sysmon Logs to File
       shell: pwsh
       run: |
-        Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | Out-File -FilePath sysmon_logs.txt
+        Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | ForEach-Object {
+          "`nEvent ID: $($_.Id)"
+          "Time Created: $($_.TimeCreated)"
+          "Message: $($_.Message)"
+        } | Out-File -FilePath sysmon_logs.txt
 
     - name: Upload Sysmon Logs as Artifact
       uses: actions/upload-artifact@v2
