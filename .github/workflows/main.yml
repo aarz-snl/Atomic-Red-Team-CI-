@@ -74,7 +74,9 @@ jobs:
         name: sysmon-logs
 
     - name: Convert Sysmon Logs to WINLOGBEAT Format
-      run: python convert.py
+      run: |
+        cat sysmon_logs.txt
+        python convert.py
 
     - name: Install jq
       run: |
