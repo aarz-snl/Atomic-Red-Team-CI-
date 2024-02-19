@@ -38,6 +38,9 @@ def main():
 
     winlogbeat_events = []
     for event in events:
+        if "Time Created" not in event:
+            print("Missing 'Time Created' in event:", event)
+            continue
         winlogbeat_json = convert_to_winlogbeat_json(event)
         winlogbeat_events.append(winlogbeat_json)
 
@@ -46,6 +49,7 @@ def main():
             file.write(json.dumps(event) + '\n')
 
     print("Conversion completed. Winlogbeat-formatted JSON saved to:", output_file_path)
+
 
 if __name__ == "__main__":
     main()
