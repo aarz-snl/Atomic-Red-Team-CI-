@@ -20,15 +20,19 @@ def read_events_from_file(file_path):
         event_data = {}
         for line in lines:
             if line.strip():
-                key, value = line.strip().split(': ', 1)
-                event_data[key] = value
+                parts = line.strip().split(': ', 1)
+                if len(parts) == 2:
+                    key, value = parts
+                    event_data[key] = value
+                else:
+                    print(f"Skipping line: {line.strip()}")
             else:
-                events.append(event_data)
+                if event_data:
+                    events.append(event_data)
                 event_data = {}
         if event_data:
             events.append(event_data)
     return events
-
 
 def main():
     input_file_path = "sysmon_logs.txt"
