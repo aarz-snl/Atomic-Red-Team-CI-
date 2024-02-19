@@ -1,36 +1,33 @@
 import json
 
-
 def convert_to_winlogbeat_json(event_data):
-    winlogbeat_json = {
-        "@timestamp": event_data.pop("Time Created"),
-        "winlog": {
-            "event_id": event_data.pop("Event ID"),
-            "message": event_data.pop("Message"),
+    try:
+        winlogbeat_json = {
+            "@timestamp": event_data.pop("UtcTime", ""),
+            "winlog": {
+                "event_id": event_data.pop("Event ID", ""),
+                "message": event_data.pop("Message", ""),
+            }
         }
-    }
-    for key, value in event_data.items():
-        winlogbeat_json[key.lower().replace(" ", "_")] = value
-    return winlogbeat_json
+        for key, value in event_data.items():
+            winlogbeat_json[key.lower().replace(" ", "_")] = value
+        return winlogbeat_json
+    except KeyError as e:
+        print(f"Key error: {e} in event data: {event_data}")
+        return {}
 
 def read_events_from_file(file_path):
     events = []
     with open(file_path, 'r') as file:
-        lines = file.readlines()
         event_data = {}
-        for line in lines:
-            if line.strip():
-                parts = line.strip().split(': ', 1)
-                if len(parts) == 2:
-                    key, value = parts
-                    event_data[key] = value
-                else:
-                    print(f"Skipping line: {line.strip()}")
-            else:
-                if event_data:
-                    events.append(event_data)
+        for line in file:
+            if ":" in line:
+                key, value = line.strip().split(":", 1)
+                event_data[key.strip()] = value.strip()
+            elif event_data:
+                events.append(event_data)
                 event_data = {}
-        if event_data:
+        if event_data:  # Add the last event
             events.append(event_data)
     return events
 
@@ -39,17 +36,12 @@ def main():
     output_file_path = "winlogbeat_events.json"
 
     events = read_events_from_file(input_file_path)
-
-    winlogbeat_events = []
-    for event in events:
-        winlogbeat_json = convert_to_winlogbeat_json(event)
-        winlogbeat_events.append(winlogbeat_json)
+    winlogbeat_events = [convert_to_winlogbeat_json(event) for event in events]
 
     with open(output_file_path, 'w') as file:
-        for event in winlogbeat_events:
-            file.write(json.dumps(event) + '\n')
+        json.dump(winlogbeat_events, file, indent=4)
 
-    print("Conversion completed. Winlogbeat-formatted JSON saved to:", output_file_path)
+    print(f"Conversion completed. Winlogbeat-formatted JSON saved to: {output_file_path}")
 
 if __name__ == "__main__":
     main()
