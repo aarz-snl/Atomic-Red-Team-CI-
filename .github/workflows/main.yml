@@ -45,3 +45,38 @@ jobs:
           Write-Host "Message: $($_.Message)"
         }
 
+    - name: Save Sysmon Logs to File
+      shell: pwsh
+      run: |
+        Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 50 | Out-File -FilePath sysmon_logs.txt
+
+    - name: Upload Sysmon Logs as Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: sysmon-logs
+        path: sysmon_logs.txt
+
+  process-logs:
+    needs: sysmon-atomic-test
+    runs-on: ubuntu-latest
+    name: Process Sysmon Logs
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Download Sysmon Logs Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: sysmon-logs
+
+    - name: Convert Sysmon Logs to WINLOGBEAT Format
+      run: python convert.py
+
+    - name: Install jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+
+    - name: Process WINLOGBEAT Format Logs with jq
+      run: |
+        cat winlogbeat_events.json | jq
